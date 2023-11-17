@@ -10,6 +10,7 @@ from tqdm import tqdm
 import pprint
 import collections.abc as collections
 import PIL.Image
+import glob
 
 from . import extractors, logger
 from .utils.base_model import dynamic_load
@@ -35,19 +36,6 @@ confs = {
         'preprocessing': {
             'grayscale': True,
             'resize_max': 1024,
-        },
-    },
-    'loftr': {
-        'output': 'feats-loftr-n4096-rmax1600',
-        'model': {
-            'name': 'loftr',
-            'nms_radius': 3,
-            'max_keypoints': 4096,
-        },
-        'preprocessing': {
-            'grayscale': True,
-            'resize_max': 1600,
-            'resize_force': True,
         },
     },
     # Resize images to 1600px even if they are originally smaller.
@@ -146,6 +134,11 @@ confs = {
         'output': 'global-feats-openibl',
         'model': {'name': 'openibl'},
         'preprocessing': {'resize_max': 1024},
+    },
+    'cosplace': {
+        'output': 'global-feats-cosplace',
+        'model': {'name': 'cosplace'},
+        'preprocessing': {'resize_max': 1024},
     }
 }
 
@@ -184,11 +177,12 @@ class ImageDataset(torch.utils.data.Dataset):
         if paths is None:
             paths = []
             for g in conf.globs:
-                paths += list(Path(root).glob('**/'+g))
+                paths += glob.glob(
+                    (Path(root) / '**' / g).as_posix(), recursive=True)
             if len(paths) == 0:
                 raise ValueError(f'Could not find any image in root: {root}.')
-            paths = sorted(list(set(paths)))
-            self.names = [i.relative_to(root).as_posix() for i in paths]
+            paths = sorted(set(paths))
+            self.names = [Path(p).relative_to(root).as_posix() for p in paths]
             logger.info(f'Found {len(self.names)} images in root {root}.')
         else:
             if isinstance(paths, (Path, str)):
@@ -259,7 +253,7 @@ def main(conf: Dict,
     model = Model(conf['model']).eval().to(device)
 
     loader = torch.utils.data.DataLoader(
-        dataset, num_workers=0, shuffle=False, pin_memory=True)
+        dataset, num_workers=1, shuffle=False, pin_memory=True)
     for idx, data in enumerate(tqdm(loader)):
         name = dataset.names[idx]
         pred = model({'image': data['image'].to(device, non_blocking=True)})

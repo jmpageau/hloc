@@ -63,8 +63,6 @@ def run_reconstruction(sfm_dir: Path,
     options = {'num_threads': min(multiprocessing.cpu_count(), 16), **options}
     with OutputCapture(verbose):
         with pycolmap.ostream():
-            print('Calling pycolmap.incremental_mapping with options:')
-            print(options)
             reconstructions = pycolmap.incremental_mapping(
                 database_path, image_dir, models_path, options=options)
 
@@ -95,8 +93,8 @@ def run_reconstruction(sfm_dir: Path,
 def main(sfm_dir: Path,
          image_dir: Path,
          pairs: Path,
-         features: List[Path],
-         matches: List[Path],
+         features: Path,
+         matches: Path,
          camera_mode: pycolmap.CameraMode = pycolmap.CameraMode.AUTO,
          verbose: bool = False,
          skip_geometric_verification: bool = False,
@@ -106,11 +104,9 @@ def main(sfm_dir: Path,
          mapper_options: Optional[Dict[str, Any]] = None,
          ) -> pycolmap.Reconstruction:
 
-    for f in features:
-        assert f.exists(), f
+    assert features.exists(), features
     assert pairs.exists(), pairs
-    for m in matches:
-        assert m.exists(), m
+    assert matches.exists(), matches
 
     sfm_dir.mkdir(parents=True, exist_ok=True)
     database = sfm_dir / 'database.db'
@@ -118,8 +114,8 @@ def main(sfm_dir: Path,
     create_empty_db(database)
     import_images(image_dir, database, camera_mode, image_list, image_options)
     image_ids = get_image_ids(database)
-    keypoint_counts = import_features(image_ids, database, features)
-    import_matches(image_ids, database, pairs, matches, keypoint_counts,
+    import_features(image_ids, database, features)
+    import_matches(image_ids, database, pairs, matches,
                    min_match_score, skip_geometric_verification)
     if not skip_geometric_verification:
         estimation_and_geometric_verification(database, pairs, verbose)

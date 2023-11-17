@@ -1,72 +1,96 @@
-# Creates a basic box for admin purposes
+FROM nvidia/cuda:11.5.2-cudnn8-devel-ubuntu20.04
 
-# Specify base
-FROM ubuntu:20.04
+ARG DEBIAN_FRONTEND=noninteractive
 
-# Specify where you want your workspace
-ARG WORKDIR="/workspace"
-WORKDIR $WORKDIR
+RUN apt-get update && apt-get install -y \
+        sudo \
+        locales \
+        software-properties-common \
+        build-essential \
+        cmake \
+        gdb \
+        gfortran \
+        wget \
+        curl \
+        ssh \
+        rsync \
+        keychain \
+        git \
+        git-lfs \
+        zip \
+        unzip \
+        vim \
+        imagemagick \
+        ffmpeg \
+        openexr \
+        libopenexr-dev \
+        python3 \
+        python3-pip \
+        python3-dev \
+        python3-setuptools \
+        cython \
+        python-is-python3 \
+        build-essentials  && \
+        apt-get install -y wget && \
+        apt-get clean && \
+        rm -rf /var/lib/apt/lists/*
 
-# Update the box
-RUN apt-get -y update
 
-# Install basic tools
-RUN apt-get install -y tmux python3-pip 
+RUN apt-get -y autoremove && apt-get -y clean
 
-# Linux Tools
-RUN apt-get install -y tmux
-RUN apt-get install -y wget curl iputils-ping
-RUN apt-get install -y zip unzip
-RUN apt-get install -y jq
+# Locale
+RUN locale-gen en_US.UTF-8
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
 
-# Update the box (refresh apt-get)
-RUN apt-get update -y
+# Python packages
+RUN pip3 install --upgrade pip && pip3 install \
+        numpy==1.22 \
+        numba==0.56.0 \
+        cupy-cuda116==10.6.0 \
+        tensorflow-gpu==2.9.1 \
+        tensorboardX==2.5.1 \
+        torch==1.13.0 \
+        scikit-learn==1.1.2 \
+        scikit-image==0.19.3 \
+        pandas==1.4.3 \
+        matplotlib==3.5.3 \
+        streamlit==1.12.0 \
+        imageio==2.21.1 \
+        imageio-ffmpeg==0.4.7 \
+        opencv-python==4.6.0.66 \
+        OpenEXR==1.3.8 \
+        skylibs==0.7.0 \
+        pycolmap==0.3.0 \
+        tqdm==4.36.0 \
+        kornia==0.6.8 \
+        plotly==5.11.0 \
+        scipy==1.9.3 \
+        h5py==3.7.0 \
+        gdown==4.5.3
 
-# Base Python
-RUN apt-get install -y python3-pip
-RUN pip3 install --upgrade pip
-RUN update-alternatives --install /usr/bin/python python $(which python3) 1
-RUN pip3 install numpy tqdm
-RUN pip3 install pyinstaller slack_sdk
+RUN pip3 install \
+        torch==1.13.0 \
+        torchvision==0.14.0 \
+        torchaudio==0.13.0 \
+        --extra-index-url https://download.pytorch.org/whl/cu113
 
-# VS Code Server
-# Note, not necessary, but significant time saver
-RUN wget "https://update.code.visualstudio.com/latest/server-linux-x64/stable" -O /tmp/vscode-server-linux-x64.tar.gz \  
-    && mkdir /tmp/vscode-server \  
-    && tar --no-same-owner -zxvf /tmp/vscode-server-linux-x64.tar.gz -C /tmp/vscode-server --strip-components=1 \  
-    && commit_id=$(cat /tmp/vscode-server/product.json | grep '"commit":' | sed -E 's/.*"([^"]+)".*/\1/') \  
-    && mkdir -p ~/.vscode-server/bin/${commit_id} \  
-    && cp -r /tmp/vscode-server/*  ~/.vscode-server/bin/${commit_id}/. 
+# Install miniconda
+ENV CONDA_DIR /opt/conda
+RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
+     /bin/bash ~/miniconda.sh -b -p /opt/conda
 
-# Update the box (refresh apt-get)
-RUN apt-get update -y
+# Put conda in path so we can use conda activate
+ENV PATH=$CONDA_DIR/bin:$PATH
 
-# Install pytorch
-RUN pip3 install torch torchvision torchaudio
+# User setup
+ARG username=jmpag
+ARG passwd=dock
+ARG uid
+ARG gid
+RUN useradd -ms /bin/bash $username
+RUN echo $username:$passwd | chpasswd && usermod -aG sudo $username
+RUN echo 'root:root' | chpasswd
 
-# For tensorboard
-#RUN pip3 install tensorboard tensorflow
-# For tensorboard without tensorflow
-RUN pip3 install tensorboardX
-
-# Update the box (refresh apt-get)
-RUN apt-get update -y
-
-# Install pip requirements
-COPY requirements.txt .
-RUN python -m pip install -r requirements.txt
-
-# Creates a non-root user with an explicit UID
-ARG USER_NAME="jmpag"
-ARG USER_ID=5678
-ARG GROUP_ID=8765
-RUN groupadd -g ${GROUP_ID} docker 
-RUN useradd -u ${USER_ID} -g ${GROUP_ID} -m -s /bin/bash ${USER_NAME}
-RUN echo "${USER_NAME}:jmpag" |  chpasswd 
-USER $USER_ID:${GROUP_ID}
-
-# Copy VS Code Server to USER
-# Note, not necessary, but significant time saver
-RUN commit_id=$(cat /tmp/vscode-server/product.json | grep '"commit":' | sed -E 's/.*"([^"]+)".*/\1/') \  
-    && mkdir -p ~/.vscode-server/bin/${commit_id} \  
-    && cp -r /tmp/vscode-server/*  ~/.vscode-server/bin/${commit_id}/.  
+EXPOSE 8501

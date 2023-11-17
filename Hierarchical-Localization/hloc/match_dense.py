@@ -100,6 +100,8 @@ def assign_keypoints(kpts: np.ndarray,
                      cell_size: Optional[int] = None):
     if not update:
         # Without update this is just a NN search
+        if len(other_cpts) == 0 or len(kpts) == 0:
+            return np.full(len(kpts), -1)
         dist, kpt_ids = KDTree(np.array(other_cpts)).query(kpts)
         valid = (dist <= max_error)
         kpt_ids[~valid] = -1
@@ -145,7 +147,7 @@ def get_unique_matches(match_ids, scores):
         return [0]
 
     isets1 = get_grouped_ids(match_ids[:, 0])
-    isets2 = get_grouped_ids(match_ids[:, 0])
+    isets2 = get_grouped_ids(match_ids[:, 1])
     uid1s = [ids[scores[ids].argmax()] for ids in isets1 if len(ids) > 0]
     uid2s = [ids[scores[ids].argmax()] for ids in isets2 if len(ids) > 0]
     uids = list(set(uid1s).intersection(uid2s))
@@ -258,7 +260,7 @@ def match_dense(conf: Dict,
 
     dataset = ImagePairDataset(image_dir, conf["preprocessing"], pairs)
     loader = torch.utils.data.DataLoader(
-            dataset, num_workers=0, batch_size=1, shuffle=False)
+            dataset, num_workers=16, batch_size=1, shuffle=False)
 
     logger.info("Performing dense matching...")
     with h5py.File(str(match_path), 'a') as fd:

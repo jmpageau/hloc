@@ -32,10 +32,6 @@ class LoFTR(BaseModel):
             'mask0': 'mask1',
             'mask1': 'mask0',
         }
-        #data_ = {}
-        #for k, v in data.items():
-        #    if k in rename:
-        #        data_[rename[k]] = v
         data_ = {rename[k]: v for k, v in data.items()}
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -44,14 +40,12 @@ class LoFTR(BaseModel):
         scores = pred['confidence']
 
         top_k = self.conf['max_num_matches']
-        pred['keypoints1'] = torch.round(pred['keypoints1'])
         if top_k is not None and len(scores) > top_k:
             keep = torch.argsort(scores, descending=True)[:top_k]
             pred['keypoints0'], pred['keypoints1'] =\
                 pred['keypoints0'][keep], pred['keypoints1'][keep]
             scores = scores[keep]
-        
-        #print(pred['keypoints1'])
+
         # Switch back indices
         pred = {(rename[k] if k in rename else k): v for k, v in pred.items()}
         pred['scores'] = scores

@@ -2,7 +2,6 @@ import argparse
 import contextlib
 from typing import Optional, List, Dict, Any
 import io
-import os
 import sys
 from pathlib import Path
 import numpy as np
@@ -57,36 +56,23 @@ def create_db_from_model(reconstruction: pycolmap.Reconstruction,
 
 def import_features(image_ids: Dict[str, int],
                     database_path: Path,
-                    features_path: List[Path]):
+                    features_path: Path):
     logger.info('Importing features into the database...')
     db = COLMAPDatabase.connect(database_path)
 
-    keypoint_offsets_per_imageid = {}
-
     for image_name, image_id in tqdm(image_ids.items()):
-        keypoints = np.empty((0,2))
-        keypoint_offsets = []
-        for f in features_path:
-            keypoint_offsets.append(keypoints.shape[0])
-            keypoints2 = get_keypoints(f, image_name)
-            keypoints = np.concatenate((keypoints, keypoints2))
-            
-            print("Image", os.path.basename(image_name), "has", keypoints2.shape[0])
+        keypoints = get_keypoints(features_path, image_name)
         keypoints += 0.5  # COLMAP origin
-        keypoint_offsets_per_imageid[image_id] = keypoint_offsets
-        #print("Total", keypoints.shape)
         db.add_keypoints(image_id, keypoints)
 
     db.commit()
     db.close()
-    return keypoint_offsets_per_imageid
 
 
 def import_matches(image_ids: Dict[str, int],
                    database_path: Path,
                    pairs_path: Path,
-                   matches_path: List[Path],
-                   matches_offsets = Dict,
+                   matches_path: Path,
                    min_match_score: Optional[float] = None,
                    skip_geometric_verification: bool = False):
     logger.info('Importing matches into the database...')
@@ -101,18 +87,7 @@ def import_matches(image_ids: Dict[str, int],
         id0, id1 = image_ids[name0], image_ids[name1]
         if len({(id0, id1), (id1, id0)} & matched) > 0:
             continue
-        
-        matches = np.empty((0,2))
-        scores = np.empty(0)
-        i = 0
-        for m in matches_path:
-            matches2, scores2 = get_matches(m, name0, name1)
-            matches2 += (matches_offsets[id0][i], matches_offsets[id1][i])
-            i += 1
-            matches = np.concatenate((matches, matches2))
-            scores = np.concatenate((scores, scores2))
-            print("Pair", os.path.basename(name0), os.path.basename(name1), "has", matches2.shape[0])
-
+        matches, scores = get_matches(matches_path, name0, name1)
         if min_match_score:
             matches = matches[scores > min_match_score]
         db.add_matches(id0, id1, matches)

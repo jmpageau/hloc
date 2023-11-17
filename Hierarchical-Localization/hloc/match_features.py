@@ -21,11 +21,18 @@ line using their name. Each is a dictionary with the following entries:
     - model: the model configuration, as passed to a feature matcher.
 '''
 confs = {
-    'loftr': {
-        'output': 'matches-loftr',
+    'superpoint+lightglue': {
+        'output': 'matches-superpoint-lightglue',
         'model': {
-            'name': 'loftr',
-            'weights': 'outdoor',
+            'name': 'lightglue',
+            'features': 'superpoint',
+        },
+    },
+    'disk+lightglue': {
+        'output': 'matches-disk-lightglue',
+        'model': {
+            'name': 'lightglue',
+            'features': 'disk',
         },
     },
     'superglue': {
@@ -220,7 +227,7 @@ def match_from_paths(conf: Dict,
 
     dataset = FeaturePairsDataset(pairs, feature_path_q, feature_path_ref)
     loader = torch.utils.data.DataLoader(
-        dataset, num_workers=0, batch_size=1, shuffle=False, pin_memory=True)
+        dataset, num_workers=5, batch_size=1, shuffle=False, pin_memory=True)
     writer_queue = WorkQueue(partial(writer_fn, match_path=match_path), 5)
 
     for idx, data in enumerate(tqdm(loader, smoothing=.1)):
