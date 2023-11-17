@@ -2,8 +2,8 @@
 
 start=`date +%s`
 
-IMAGES_PATH="Hierarchical-Localization/datasets/BureauCube"
-COLMAP_OUTPUT_PATH="Hierarchical-Localization/outputs/BureauCube"
+IMAGES_PATH="Hierarchical-Localization/datasets/dragon/images"
+COLMAP_OUTPUT_PATH="Hierarchical-Localization/outputs/dragon"
 
 #Derotate images (use exif 'Orientation' tag to orient, then rotate image then delete the exif)
 #REQUIRES PACKAGE 'imagemagick'
