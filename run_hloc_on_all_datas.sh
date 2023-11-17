@@ -7,15 +7,15 @@ COLMAP_OUTPUT_PATH="Hierarchical-Localization/outputs/BureauCube"
 
 #Derotate images (use exif 'Orientation' tag to orient, then rotate image then delete the exif)
 #REQUIRES PACKAGE 'imagemagick'
-shopt -s nullglob
-for file in "$IMAGES_PATH"/*.{jpg,jpeg,png}
-do
-    orientation=$(identify -format "%[orientation]" $file)
-    if ! [[ "$orientation" == "Undefined" || "$orientation" == "TopLeft" ]]; then
-        echo "$file has orientation $orientation, reorienting it..."
-        convert "$file" -auto-orient "$file"
-    fi
-done
+#shopt -s nullglob
+#for file in "$IMAGES_PATH"/*.{jpg,jpeg,png}
+#do
+#    orientation=$(identify -format "%[orientation]" $file)
+#    if ! [[ "$orientation" == "Undefined" || "$orientation" == "TopLeft" ]]; then
+#        echo "$file has orientation $orientation, reorienting it..."
+#        convert "$file" -auto-orient "$file"
+#    fi
+#done
 
 
 python3 Hierarchical-Localization/pipeline_SfM.py --images $IMAGES_PATH --output $COLMAP_OUTPUT_PATH
