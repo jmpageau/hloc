@@ -2,8 +2,8 @@
 
 start=`date +%s`
 
-IMAGES_PATH="Hierarchical-Localization/datasets/dragon/images"
-COLMAP_OUTPUT_PATH="Hierarchical-Localization/outputs/dragon"
+IMAGES_PATH="Hierarchical-Localization/datasets/13camLoftr/images"
+COLMAP_OUTPUT_PATH="Hierarchical-Localization/outputs/13camLoftr"
 
 #Derotate images (use exif 'Orientation' tag to orient, then rotate image then delete the exif)
 #REQUIRES PACKAGE 'imagemagick'
@@ -18,7 +18,7 @@ COLMAP_OUTPUT_PATH="Hierarchical-Localization/outputs/dragon"
 #done
 
 
-python3 Hierarchical-Localization/pipeline_SfM.py --images $IMAGES_PATH --output $COLMAP_OUTPUT_PATH
+python3 Hierarchical-Localization/pipeline_SfM.py --images $IMAGES_PATH --output $COLMAP_OUTPUT_PATH --num_pairs 11
 
 python3 colmap2nerf.py --colmap_db "$COLMAP_OUTPUT_PATH/sfm_loftr" --text "$COLMAP_OUTPUT_PATH/sfm_loftr" --images "$IMAGES_PATH" --aabb_scale 16 --out "$IMAGES_PATH/transforms.json"
 

@@ -4,5 +4,4 @@ __pycache__
 .ipynb_checkpoints
 outputs/
 datasets/*
-!datasets/dragon/
-!datasets/close_cams/
+!datasets/sacre_coeur/

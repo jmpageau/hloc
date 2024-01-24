@@ -104,9 +104,14 @@ def main(sfm_dir: Path,
          mapper_options: Optional[Dict[str, Any]] = None,
          ) -> pycolmap.Reconstruction:
 
+    features = Path(features[0])
+    matches = Path(matches[0])
     assert features.exists(), features
     assert pairs.exists(), pairs
     assert matches.exists(), matches
+    print(features)
+    print(pairs)
+    print(matches)
 
     sfm_dir.mkdir(parents=True, exist_ok=True)
     database = sfm_dir / 'database.db'
