@@ -6,7 +6,7 @@ Requires a Linux system due to the PyColmap dependency that does not (yet) exist
 
 Requires Python >=3.7 and PyTorch >=1.1
 
-First, use git to clone the repository at https://dev.azure.com/CDRIN/2122_74_CAE/_git/HLOC
+First, use git to clone the repository at https://github.com/jmpageau/hloc
 Don't forget to also pull the submodules, in a GUI client like tortoiseGit it is a checkbox, and on command-line it is:
 ```
 git submodule update --init --recursive
